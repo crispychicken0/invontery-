@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crispy Chicken - Sales Analysis Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #c62828;
+            --secondary: #fb8c00;
+            --success: #43a047;
+            --info: #1e88e5;
+            --warning: #fdd835;
+            --danger: #e53935;
+            --light: #f5f5f5;
+            --dark: #263238;
+            --gray: #78909c;
+            --border: #eceff1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(229, 57, 53, 0.2);
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .card-change {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .positive {
+            color: var(--success);
+        }
+
+        .negative {
+            color: var(--danger);
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--light);
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--gray);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .chart-box {
+            position: relative;
+            height: 300px;
+        }
+
+        .export-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .export-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray);
+        }
+
+        .filter-control {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .search-box {
+                width: 100%;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Crispy Chicken Sales Analysis</h1>
+            <p class="header-subtitle">Monthly Sales Mix Items Summary - August 2025</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Total Gross Sales</div>
+                    <i class="fas fa-money-bill-wave" style="color: var(--primary);"></i>
+                </div>
+                <div class="card-value">AED 4,494,890.91</div>
+                <div class="card-change">
+                    <span>For August 2025</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Net Sales</div>
+                    <i class="fas fa-chart-line" style="color: var(--success);"></i>
+                </div>
+                <div class="card-value">AED 4,310,760.02</div>
+                <div class="card-change">
+                    <span>After discounts</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Total Quantity Sold</div>
+                    <i class="fas fa-boxes" style="color: var(--info);"></i>
+                </div>
+                <div class="card-value">387,551</div>
+                <div class="card-change">
+                    <span>Units</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Average Price</div>
+                    <i class="fas fa-calculator" style="color: var(--warning);"></i>
+                </div>
+                <div class="card-value">AED 11.12</div>
+                <div class="card-change">
+                    <span>Per unit</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('sales-data')">
+                <i class="fas fa-table"></i> Sales Data
+            </div>
+            <div class="tab" onclick="switchTab('analysis')">
+                <i class="fas fa-chart-bar"></i> Analysis
+            </div>
+            <div class="tab" onclick="switchTab('reports')">
+                <i class="fas fa-file-export"></i> Reports
+            </div>
+        </div>
+
+        <div id="sales-data" class="tab-content active">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2>Sales Mix Items Summary</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search items..." id="searchInput">
+                    </div>
+                </div>
+                
+                <div class="filter-container">
+                    <div class="filter-group">
+                        <label for="familyFilter">Family Group</label>
+                        <select class="filter-control" id="familyFilter">
+                            <option value="">All</option>
+                            <option value="Combo Meal Spicy">Combo Meal Spicy</option>
+                            <option value="Combo Meal Original">Combo Meal Original</option>
+                            <option value="Combo Meal Mix">Combo Meal Mix</option>
+                            <option value="Combo Sandwich">Combo Sandwich</option>
+                            <option value="Sandwich">Sandwich</option>
+                            <option value="Soft Drinks">Soft Drinks</option>
+                            <option value="Side Order">Side Order</option>
+                            <option value="Food Modifiers">Food Modifiers</option>
+                            <option value="SNACK MEAL">SNACK MEAL</option>
+                            <option value="KIDS MEAL">KIDS MEAL</option>
+                            <option value="Beverage">Beverage</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="majorFilter">Major Group</label>
+                        <select class="filter-control" id="majorFilter">
+                            <option value="">All</option>
+                            <option value="Food">Food</option>
+                            <option value="Beverage">Beverage</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sortBy">Sort By</label>
+                        <select class="filter-control" id="sortBy">
+                            <option value="salesLessDisc">Net Sales</option>
+                            <option value="grossSales">Gross Sales</option>
+                            <option value="qtySold">Quantity Sold</option>
+                            <option value="avgPrice">Average Price</option>
+                            <option value="percentSales">% Sales</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table id="salesTable">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Family Group</th>
+                                <th>Major Group</th>
+                                <th>Gross Sales</th>
+                                <th>Item Discounts</th>
+                                <th>Sales Less Item Disc</th>
+                                <th>% Sales</th>
+                                <th>Qty Sold</th>
+                                <th>% Qty Sold</th>
+                                <th>Average Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="analysis" class="tab-content">
+            <div class="chart-container">
+                <h2 style="margin-bottom: 1.5rem;">Sales Analysis</h2>
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <canvas id="salesByFamilyChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="salesByMajorChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="discountImpactChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports" class="tab-content">
+            <div class="export-section">
+                <h2>Export Reports</h2>
+                <p>Select the type of report you want to export</p>
+                <div class="export-buttons">
+                    <button class="btn btn-success" onclick="exportToCSV()">
+                        <i class="fas fa-file-csv"></i> Export as CSV
+                    </button>
+                    <button class="btn btn-primary" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf"></i> Export as PDF
+                    </button>
+                    <button class="btn btn-info" onclick="generateSummaryReport()">
+                        <i class="fas fa-file-alt"></i> Summary Report
+                    </button>
+                    <button class="btn btn-warning" onclick="generateInventoryReport()">
+                        <i class="fas fa-warehouse"></i> Inventory Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sales data
+        const salesData = [
+            { item: "Daily Spicy Meal", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 691202.58, itemDiscounts: -17241.60, salesLessItemDisc: 673960.98, percentSales: 15.63, qtySold: 43857, percentQtySold: 11.32, avgPrice: 15.37 },
+            { item: "DAILY OFFER Spicy Meal", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 487237.90, itemDiscounts: -45736.45, salesLessItemDisc: 441501.45, percentSales: 10.24, qtySold: 13664, percentQtySold: 3.53, avgPrice: 32.31 },
+            { item: "Daily Original Meal", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 395062.71, itemDiscounts: -10146.93, salesLessItemDisc: 384915.78, percentSales: 8.93, qtySold: 24220, percentQtySold: 6.25, avgPrice: 15.89 },
+            { item: "DAILY OFFER Original Meal", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 380322.91, itemDiscounts: -32547.42, salesLessItemDisc: 347775.49, percentSales: 8.07, qtySold: 10325, percentQtySold: 2.66, avgPrice: 33.68 },
+            { item: "CHICKEN DAY SPICY", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 102127.05, itemDiscounts: 0.00, salesLessItemDisc: 102127.05, percentSales: 2.37, qtySold: 5361, percentQtySold: 1.38, avgPrice: 19.05 },
+            { item: "DAILY OFFER MIX Meal", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 93001.89, itemDiscounts: -141.91, salesLessItemDisc: 92859.98, percentSales: 2.15, qtySold: 2850, percentQtySold: 0.74, avgPrice: 32.58 },
+            { item: "SAVING MEAL Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 92712.84, itemDiscounts: -7693.69, salesLessItemDisc: 85019.15, percentSales: 1.97, qtySold: 3371, percentQtySold: 0.87, avgPrice: 25.22 },
+            { item: "ULTIMATE Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 78453.22, itemDiscounts: 0.00, salesLessItemDisc: 78453.22, percentSales: 1.82, qtySold: 2746, percentQtySold: 0.71, avgPrice: 28.57 },
+            { item: "DAILY OFFER Original Mea", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 78957.47, itemDiscounts: -7435.35, salesLessItemDisc: 71522.12, percentSales: 1.66, qtySold: 2181, percentQtySold: 0.56, avgPrice: 32.79 },
+            { item: "SAVING MEAL Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 73857.58, itemDiscounts: -6449.58, salesLessItemDisc: 67408.00, percentSales: 1.56, qtySold: 2794, percentQtySold: 0.72, avgPrice: 24.13 },
+            { item: "Daily Spicy Meal Noon", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 57911.58, itemDiscounts: 0.00, salesLessItemDisc: 57911.58, percentSales: 1.34, qtySold: 3475, percentQtySold: 0.90, avgPrice: 16.67 },
+            { item: "SUPER MEAL Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 52544.89, itemDiscounts: -657.59, salesLessItemDisc: 51887.30, percentSales: 1.20, qtySold: 987, percentQtySold: 0.25, avgPrice: 52.57 },
+            { item: "Daily MIX Meal", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 49168.05, itemDiscounts: -18.59, salesLessItemDisc: 49149.46, percentSales: 1.14, qtySold: 3095, percentQtySold: 0.80, avgPrice: 15.88 },
+            { item: "Daily Original Meal Noon", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 46409.28, itemDiscounts: 0.00, salesLessItemDisc: 46409.28, percentSales: 1.08, qtySold: 2785, percentQtySold: 0.72, avgPrice: 16.66 },
+            { item: "DELIVERY CHARGES 5", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 39993.52, itemDiscounts: -0.48, salesLessItemDisc: 39993.04, percentSales: 0.93, qtySold: 8402, percentQtySold: 2.17, avgPrice: 4.76 },
+            { item: "Daily MIX Meal Noon", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 39091.15, itemDiscounts: 0.00, salesLessItemDisc: 39091.15, percentSales: 0.91, qtySold: 2346, percentQtySold: 0.61, avgPrice: 16.66 },
+            { item: "SUPER MEAL Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 38741.67, itemDiscounts: -289.84, salesLessItemDisc: 38451.83, percentSales: 0.89, qtySold: 804, percentQtySold: 0.21, avgPrice: 47.83 },
+            { item: "BUCKET MEAL Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 36770.76, itemDiscounts: 0.00, salesLessItemDisc: 36770.76, percentSales: 0.85, qtySold: 702, percentQtySold: 0.18, avgPrice: 52.38 },
+            { item: "CHICKEN DAY Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 34804.35, itemDiscounts: 0.00, salesLessItemDisc: 34804.35, percentSales: 0.81, qtySold: 1827, percentQtySold: 0.47, avgPrice: 19.05 },
+            { item: "Twin Twist Original", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 36990.79, itemDiscounts: -2307.12, salesLessItemDisc: 34683.67, percentSales: 0.80, qtySold: 1759, percentQtySold: 0.45, avgPrice: 19.72 },
+            { item: "IDEAL MEAL Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 33842.75, itemDiscounts: -303.90, salesLessItemDisc: 33538.85, percentSales: 0.78, qtySold: 432, percentQtySold: 0.11, avgPrice: 77.64 },
+            { item: "CHICKEN STRIPS Original Meal", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 34063.83, itemDiscounts: -2115.91, salesLessItemDisc: 31947.92, percentSales: 0.74, qtySold: 1338, percentQtySold: 0.35, avgPrice: 23.88 },
+            { item: "TWIN BEEF BURGER", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 32904.72, itemDiscounts: -1880.67, salesLessItemDisc: 31024.05, percentSales: 0.72, qtySold: 1609, percentQtySold: 0.42, avgPrice: 19.28 },
+            { item: "BEEF BURGER SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 30388.51, itemDiscounts: -1817.73, salesLessItemDisc: 28570.78, percentSales: 0.66, qtySold: 3790, percentQtySold: 0.98, avgPrice: 7.54 },
+            { item: "TWIST Origina SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 30245.93, itemDiscounts: -1689.89, salesLessItemDisc: 28556.04, percentSales: 0.66, qtySold: 3529, percentQtySold: 0.91, avgPrice: 8.09 },
+            { item: "LITER PEPSI", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 26775.00, itemDiscounts: 0.00, salesLessItemDisc: 26775.00, percentSales: 0.62, qtySold: 6452, percentQtySold: 1.66, avgPrice: 4.15 },
+            { item: "Twin Twist Spicy", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 27697.46, itemDiscounts: -1193.33, salesLessItemDisc: 26504.13, percentSales: 0.61, qtySold: 1435, percentQtySold: 0.37, avgPrice: 18.47 },
+            { item: "GRAVEY SAUCE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 27049.26, itemDiscounts: -608.35, salesLessItemDisc: 26440.91, percentSales: 0.61, qtySold: 20087, percentQtySold: 5.18, avgPrice: 1.32 },
+            { item: "Twin Supreme Meal", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 27841.99, itemDiscounts: -2111.98, salesLessItemDisc: 25730.01, percentSales: 0.60, qtySold: 1299, percentQtySold: 0.34, avgPrice: 19.81 },
+            { item: "TWIST Spicy SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 25861.14, itemDiscounts: -1155.04, salesLessItemDisc: 24706.10, percentSales: 0.57, qtySold: 3354, percentQtySold: 0.87, avgPrice: 7.37 },
+            { item: "IDEAL MEAL Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 24483.23, itemDiscounts: -190.02, salesLessItemDisc: 24293.21, percentSales: 0.56, qtySold: 345, percentQtySold: 0.09, avgPrice: 70.42 },
+            { item: "ULTIMATE MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 24227.36, itemDiscounts: -17.31, salesLessItemDisc: 24210.05, percentSales: 0.56, qtySold: 848, percentQtySold: 0.22, avgPrice: 28.55 },
+            { item: "PEPSI S", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 24476.38, itemDiscounts: -328.05, salesLessItemDisc: 24148.33, percentSales: 0.56, qtySold: 10793, percentQtySold: 2.78, avgPrice: 2.24 },
+            { item: "MEGA MEAL Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 24163.72, itemDiscounts: -39.23, salesLessItemDisc: 24124.49, percentSales: 0.56, qtySold: 230, percentQtySold: 0.06, avgPrice: 104.89 },
+            { item: "MEGA MEAL Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 24142.60, itemDiscounts: -102.89, salesLessItemDisc: 24039.71, percentSales: 0.56, qtySold: 208, percentQtySold: 0.05, avgPrice: 115.58 },
+            { item: "RICE MEAL Original", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 23507.05, itemDiscounts: 0.00, salesLessItemDisc: 23507.05, percentSales: 0.55, qtySold: 1645, percentQtySold: 0.42, avgPrice: 14.29 },
+            { item: "ULTIMATE Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 22684.58, itemDiscounts: 0.00, salesLessItemDisc: 22684.58, percentSales: 0.53, qtySold: 794, percentQtySold: 0.20, avgPrice: 28.57 },
+            { item: "CHICKEN DAY MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 21850.35, itemDiscounts: 0.00, salesLessItemDisc: 21850.35, percentSales: 0.51, qtySold: 1147, percentQtySold: 0.30, avgPrice: 19.05 },
+            { item: "Crispy Strips Spicy Meal", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 23109.91, itemDiscounts: -1488.35, salesLessItemDisc: 21621.56, percentSales: 0.50, qtySold: 933, percentQtySold: 0.24, avgPrice: 23.17 },
+            { item: "RICE MEAL Spicy", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 21349.26, itemDiscounts: 0.00, salesLessItemDisc: 21349.26, percentSales: 0.50, qtySold: 1494, percentQtySold: 0.39, avgPrice: 14.29 },
+            { item: "FRENCH FRIES SMALL", familyGroup: "Side Order", majorGroup: "Food", grossSales: 21603.06, itemDiscounts: -560.35, salesLessItemDisc: 21042.71, percentSales: 0.49, qtySold: 9453, percentQtySold: 2.44, avgPrice: 2.23 },
+            { item: "SNACK SANDWICH Spicy", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 21010.11, itemDiscounts: 0.00, salesLessItemDisc: 21010.11, percentSales: 0.49, qtySold: 1470, percentQtySold: 0.38, avgPrice: 14.29 },
+            { item: "BUCKET MEAL Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 19956.78, itemDiscounts: 0.00, salesLessItemDisc: 19956.78, percentSales: 0.46, qtySold: 381, percentQtySold: 0.10, avgPrice: 52.38 },
+            { item: "Twin Suprem Spicy", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 20754.74, itemDiscounts: -1302.48, salesLessItemDisc: 19452.26, percentSales: 0.45, qtySold: 1035, percentQtySold: 0.27, avgPrice: 18.79 },
+            { item: "SPICIAL FAMILY Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 19278.34, itemDiscounts: -110.99, salesLessItemDisc: 19167.35, percentSales: 0.44, qtySold: 191, percentQtySold: 0.05, avgPrice: 100.35 },
+            { item: "WHITE RICE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 19244.01, itemDiscounts: -338.35, salesLessItemDisc: 18905.66, percentSales: 0.44, qtySold: 4451, percentQtySold: 1.15, avgPrice: 4.25 },
+            { item: "SNACK BOX Spicy", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 18099.58, itemDiscounts: -299.53, salesLessItemDisc: 17800.05, percentSales: 0.41, qtySold: 1213, percentQtySold: 0.31, avgPrice: 14.67 },
+            { item: "Big Coleslaw", familyGroup: "Side Order", majorGroup: "Food", grossSales: 17983.64, itemDiscounts: -625.72, salesLessItemDisc: 17357.92, percentSales: 0.40, qtySold: 2382, percentQtySold: 0.61, avgPrice: 7.29 },
+            { item: "TORNADO Origina SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 18375.48, itemDiscounts: -1746.47, salesLessItemDisc: 16629.01, percentSales: 0.39, qtySold: 1718, percentQtySold: 0.44, avgPrice: 9.68 },
+            { item: "FAJITA SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 17861.28, itemDiscounts: -1580.20, salesLessItemDisc: 16281.08, percentSales: 0.38, qtySold: 1856, percentQtySold: 0.48, avgPrice: 8.77 },
+            { item: "BUCKET MEAL MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 15556.86, itemDiscounts: 0.00, salesLessItemDisc: 15556.86, percentSales: 0.36, qtySold: 297, percentQtySold: 0.08, avgPrice: 52.38 },
+            { item: "MAX DOUBLE SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 17760.97, itemDiscounts: -2353.89, salesLessItemDisc: 15407.08, percentSales: 0.36, qtySold: 1063, percentQtySold: 0.27, avgPrice: 14.49 },
+            { item: "SPICIAL FAMILY Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 15015.79, itemDiscounts: -30.29, salesLessItemDisc: 14985.50, percentSales: 0.35, qtySold: 169, percentQtySold: 0.04, avgPrice: 88.67 },
+            { item: "20 PCS PACKET Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 14975.75, itemDiscounts: 0.00, salesLessItemDisc: 14975.75, percentSales: 0.35, qtySold: 185, percentQtySold: 0.05, avgPrice: 80.95 },
+            { item: "CRISPY RICE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 16370.16, itemDiscounts: -1604.30, salesLessItemDisc: 14765.86, percentSales: 0.34, qtySold: 1605, percentQtySold: 0.41, avgPrice: 9.20 },
+            { item: "MEGA MEAL MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 14639.92, itemDiscounts: -26.34, salesLessItemDisc: 14613.58, percentSales: 0.34, qtySold: 136, percentQtySold: 0.04, avgPrice: 107.45 },
+            { item: "Volcano Combo Double", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 15644.31, itemDiscounts: -1380.07, salesLessItemDisc: 14264.24, percentSales: 0.33, qtySold: 649, percentQtySold: 0.17, avgPrice: 21.98 },
+            { item: "DYNAMITE Origina SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 15659.10, itemDiscounts: -1886.65, salesLessItemDisc: 13772.45, percentSales: 0.32, qtySold: 1472, percentQtySold: 0.38, avgPrice: 9.36 },
+            { item: "IDEAL MEAL MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 13702.00, itemDiscounts: -55.18, salesLessItemDisc: 13646.82, percentSales: 0.32, qtySold: 193, percentQtySold: 0.05, avgPrice: 70.71 },
+            { item: "Crispy Snack Spicy Meal", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 14037.37, itemDiscounts: -614.69, salesLessItemDisc: 13422.68, percentSales: 0.31, qtySold: 913, percentQtySold: 0.24, avgPrice: 14.70 },
+            { item: "Volcano Sandwich Double", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 14940.62, itemDiscounts: -1520.28, salesLessItemDisc: 13420.34, percentSales: 0.31, qtySold: 782, percentQtySold: 0.20, avgPrice: 17.16 },
+            { item: "GARLIC - SMALL", familyGroup: "Side Order", majorGroup: "Food", grossSales: 13667.65, itemDiscounts: -385.69, salesLessItemDisc: 13281.96, percentSales: 0.31, qtySold: 10912, percentQtySold: 2.82, avgPrice: 1.22 },
+            { item: "SNACK SANDWICH Original", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 13236.35, itemDiscounts: 0.00, salesLessItemDisc: 13236.35, percentSales: 0.31, qtySold: 926, percentQtySold: 0.24, avgPrice: 14.29 },
+            { item: "SUPER CRUNCHY SP SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 13239.49, itemDiscounts: -368.20, salesLessItemDisc: 12871.29, percentSales: 0.30, qtySold: 1801, percentQtySold: 0.46, avgPrice: 7.15 },
+            { item: "SUPER MEAL - MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 12808.17, itemDiscounts: -118.28, salesLessItemDisc: 12689.89, percentSales: 0.29, qtySold: 267, percentQtySold: 0.07, avgPrice: 47.53 },
+            { item: "TORNADO Spicy SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 13463.20, itemDiscounts: -1012.27, salesLessItemDisc: 12450.93, percentSales: 0.29, qtySold: 1312, percentQtySold: 0.34, avgPrice: 9.49 },
+            { item: "SHAWARMA Origina SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 13051.95, itemDiscounts: -821.36, salesLessItemDisc: 12230.59, percentSales: 0.28, qtySold: 1800, percentQtySold: 0.46, avgPrice: 6.79 },
+            { item: "1/2 CHICKEN Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 12323.44, itemDiscounts: -99.12, salesLessItemDisc: 12224.32, percentSales: 0.28, qtySold: 539, percentQtySold: 0.14, avgPrice: 22.68 },
+            { item: "STRIPS FAMILY Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 12366.24, itemDiscounts: -147.01, salesLessItemDisc: 12219.23, percentSales: 0.28, qtySold: 136, percentQtySold: 0.04, avgPrice: 89.85 },
+            { item: "SNACK BOX Original", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 12007.26, itemDiscounts: -182.44, salesLessItemDisc: 11824.82, percentSales: 0.27, qtySold: 780, percentQtySold: 0.20, avgPrice: 15.16 },
+            { item: "CHICKEN DAY S Careem Offers", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 11887.20, itemDiscounts: -78.80, salesLessItemDisc: 11808.40, percentSales: 0.27, qtySold: 625, percentQtySold: 0.16, avgPrice: 18.89 },
+            { item: "SUPER CRUNCHY OR SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 11982.38, itemDiscounts: -568.91, salesLessItemDisc: 11413.47, percentSales: 0.26, qtySold: 1496, percentQtySold: 0.39, avgPrice: 7.63 },
+            { item: "Spicy 4 pcs chicken meal @ 8 AED", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 10978.17, itemDiscounts: 0.00, salesLessItemDisc: 10978.17, percentSales: 0.25, qtySold: 1281, percentQtySold: 0.33, avgPrice: 8.57 },
+            { item: "HOT CHEDAR CHEESE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 11192.90, itemDiscounts: -438.62, salesLessItemDisc: 10754.28, percentSales: 0.25, qtySold: 5891, percentQtySold: 1.52, avgPrice: 1.83 },
+            { item: "SUPREME Origina SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 11267.44, itemDiscounts: -707.74, salesLessItemDisc: 10559.70, percentSales: 0.24, qtySold: 1270, percentQtySold: 0.33, avgPrice: 8.31 },
+            { item: "Small Coleslaw", familyGroup: "Side Order", majorGroup: "Food", grossSales: 10935.22, itemDiscounts: -488.02, salesLessItemDisc: 10447.20, percentSales: 0.24, qtySold: 2922, percentQtySold: 0.75, avgPrice: 3.58 },
+            { item: "FAJITA Spicy SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 10911.84, itemDiscounts: -636.79, salesLessItemDisc: 10275.05, percentSales: 0.24, qtySold: 1255, percentQtySold: 0.32, avgPrice: 8.19 },
+            { item: "Saving meal or Bogo", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 10142.41, itemDiscounts: -42.84, salesLessItemDisc: 10099.57, percentSales: 0.23, qtySold: 586, percentQtySold: 0.15, avgPrice: 17.23 },
+            { item: "Spicy - FRIES", familyGroup: "Side Order", majorGroup: "Food", grossSales: 9703.30, itemDiscounts: -0.95, salesLessItemDisc: 9702.35, percentSales: 0.23, qtySold: 10214, percentQtySold: 2.64, avgPrice: 0.95 },
+            { item: "Saving meal sp Bogo", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 9761.43, itemDiscounts: -87.15, salesLessItemDisc: 9674.28, percentSales: 0.22, qtySold: 827, percentQtySold: 0.21, avgPrice: 11.70 },
+            { item: "MAXI CHICKEN DOUBLE COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 10565.59, itemDiscounts: -911.63, salesLessItemDisc: 9653.96, percentSales: 0.22, qtySold: 468, percentQtySold: 0.12, avgPrice: 20.63 },
+            { item: "TWIST BOX SPICY", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 9471.15, itemDiscounts: 0.00, salesLessItemDisc: 9471.15, percentSales: 0.22, qtySold: 585, percentQtySold: 0.15, avgPrice: 16.19 },
+            { item: "Twin Chicken Burger", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 9775.94, itemDiscounts: -363.24, salesLessItemDisc: 9412.70, percentSales: 0.22, qtySold: 489, percentQtySold: 0.13, avgPrice: 19.25 },
+            { item: "CHICKEN BURGER SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 9669.19, itemDiscounts: -258.37, salesLessItemDisc: 9410.82, percentSales: 0.22, qtySold: 1288, percentQtySold: 0.33, avgPrice: 7.31 },
+            { item: "SPICIAL FAMILY MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 8936.90, itemDiscounts: -20.92, salesLessItemDisc: 8915.98, percentSales: 0.21, qtySold: 100, percentQtySold: 0.03, avgPrice: 89.16 },
+            { item: "Crispy Snack Original Meal", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 8906.35, itemDiscounts: -257.55, salesLessItemDisc: 8648.80, percentSales: 0.20, qtySold: 571, percentQtySold: 0.15, avgPrice: 15.15 },
+            { item: "Volcano Sandwich Single", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 8958.59, itemDiscounts: -613.39, salesLessItemDisc: 8345.20, percentSales: 0.19, qtySold: 631, percentQtySold: 0.16, avgPrice: 13.23 },
+            { item: "DYNAMITE SAUCE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 8760.90, itemDiscounts: -436.79, salesLessItemDisc: 8324.11, percentSales: 0.19, qtySold: 6232, percentQtySold: 1.61, avgPrice: 1.34 },
+            { item: "12 PCS PACKET Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 8278.72, itemDiscounts: 0.00, salesLessItemDisc: 8278.72, percentSales: 0.19, qtySold: 164, percentQtySold: 0.04, avgPrice: 50.48 },
+            { item: "Steak Combo", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 8833.30, itemDiscounts: -554.90, salesLessItemDisc: 8278.40, percentSales: 0.19, qtySold: 480, percentQtySold: 0.12, avgPrice: 17.25 },
+            { item: "Steak Sandwich", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 8302.24, itemDiscounts: -220.43, salesLessItemDisc: 8081.81, percentSales: 0.19, qtySold: 557, percentQtySold: 0.14, avgPrice: 14.51 },
+            { item: "FRENCH FRIES- LARGE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 8324.48, itemDiscounts: -385.43, salesLessItemDisc: 7939.05, percentSales: 0.18, qtySold: 1110, percentQtySold: 0.29, avgPrice: 7.15 },
+            { item: "LITER Mountain Dew", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 7792.12, itemDiscounts: 0.00, salesLessItemDisc: 7792.12, percentSales: 0.18, qtySold: 1702, percentQtySold: 0.44, avgPrice: 4.58 },
+            { item: "Ultimate S Careem Offers", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 8371.01, itemDiscounts: -579.14, salesLessItemDisc: 7791.87, percentSales: 0.18, qtySold: 295, percentQtySold: 0.08, avgPrice: 26.41 },
+            { item: "CRISPY LARGE Spicy", familyGroup: "Side Order", majorGroup: "Food", grossSales: 7625.52, itemDiscounts: 0.00, salesLessItemDisc: 7625.52, percentSales: 0.18, qtySold: 801, percentQtySold: 0.21, avgPrice: 9.52 },
+            { item: "STRIPS FAMILY Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 7575.54, itemDiscounts: -70.88, salesLessItemDisc: 7504.66, percentSales: 0.17, qtySold: 86, percentQtySold: 0.02, avgPrice: 87.26 },
+            { item: "SHAWARMA Spicy SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 7753.33, itemDiscounts: -650.46, salesLessItemDisc: 7102.87, percentSales: 0.16, qtySold: 1064, percentQtySold: 0.27, avgPrice: 6.68 },
+            { item: "SPICED RICE", familyGroup: "Side Order", majorGroup: "Food", grossSales: 7398.81, itemDiscounts: -327.07, salesLessItemDisc: 7071.74, percentSales: 0.16, qtySold: 1245, percentQtySold: 0.32, avgPrice: 5.68 },
+            { item: "FRENCH FRIES-BOX", familyGroup: "Side Order", majorGroup: "Food", grossSales: 6930.56, itemDiscounts: 0.00, salesLessItemDisc: 6930.56, percentSales: 0.16, qtySold: 728, percentQtySold: 0.19, avgPrice: 9.52 },
+            { item: "Twin SUPREM MIX", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 7309.51, itemDiscounts: -697.56, salesLessItemDisc: 6611.95, percentSales: 0.15, qtySold: 321, percentQtySold: 0.08, avgPrice: 20.60 },
+            { item: "BUFFALO SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 7069.70, itemDiscounts: -475.04, salesLessItemDisc: 6594.66, percentSales: 0.15, qtySold: 674, percentQtySold: 0.17, avgPrice: 9.78 },
+            { item: "TORNADO OR COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 7111.41, itemDiscounts: -566.07, salesLessItemDisc: 6545.34, percentSales: 0.15, qtySold: 429, percentQtySold: 0.11, avgPrice: 15.26 },
+            { item: "1/2 CHICKEN Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 6606.54, itemDiscounts: -154.49, salesLessItemDisc: 6452.05, percentSales: 0.15, qtySold: 289, percentQtySold: 0.07, avgPrice: 22.33 },
+            { item: "Twin Twist MIX", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 6909.35, itemDiscounts: -515.38, salesLessItemDisc: 6393.97, percentSales: 0.15, qtySold: 318, percentQtySold: 0.08, avgPrice: 20.11 },
+            { item: "CHICKEN DAY O Careem Offers", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 6381.75, itemDiscounts: -65.28, salesLessItemDisc: 6316.47, percentSales: 0.15, qtySold: 336, percentQtySold: 0.09, avgPrice: 18.80 },
+            { item: "Mix 4 pcs chicken meal @ 8 AED", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 6247.53, itemDiscounts: 0.00, salesLessItemDisc: 6247.53, percentSales: 0.14, qtySold: 729, percentQtySold: 0.19, avgPrice: 8.57 },
+            { item: "TORNADO SP COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 6753.07, itemDiscounts: -578.78, salesLessItemDisc: 6174.29, percentSales: 0.14, qtySold: 415, percentQtySold: 0.11, avgPrice: 14.88 },
+            { item: "20 PCS PACKET MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 5902.78, itemDiscounts: 0.00, salesLessItemDisc: 5902.78, percentSales: 0.14, qtySold: 73, percentQtySold: 0.02, avgPrice: 80.86 },
+            { item: "SPICY PCS", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 5902.40, itemDiscounts: 0.00, salesLessItemDisc: 5902.40, percentSales: 0.14, qtySold: 1240, percentQtySold: 0.32, avgPrice: 4.76 },
+            { item: "BUN", familyGroup: "Side Order", majorGroup: "Food", grossSales: 5850.10, itemDiscounts: -0.24, salesLessItemDisc: 5849.86, percentSales: 0.14, qtySold: 6158, percentQtySold: 1.59, avgPrice: 0.95 },
+            { item: "CHICKEN STRIPS Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 6347.25, itemDiscounts: -505.77, salesLessItemDisc: 5841.48, percentSales: 0.14, qtySold: 247, percentQtySold: 0.06, avgPrice: 23.65 },
+            { item: "Ultimate O Careem Offers", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 5971.13, itemDiscounts: -378.10, salesLessItemDisc: 5593.03, percentSales: 0.13, qtySold: 210, percentQtySold: 0.05, avgPrice: 26.63 },
+            { item: "SUPREME Spicy SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 5676.81, itemDiscounts: -229.98, salesLessItemDisc: 5446.83, percentSales: 0.13, qtySold: 726, percentQtySold: 0.19, avgPrice: 7.50 },
+            { item: "M.WATER 500ML", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 5479.38, itemDiscounts: -40.49, salesLessItemDisc: 5438.89, percentSales: 0.13, qtySold: 2799, percentQtySold: 0.72, avgPrice: 1.94 },
+            { item: "CRISPY LARGE Original", familyGroup: "Side Order", majorGroup: "Food", grossSales: 5426.40, itemDiscounts: 0.00, salesLessItemDisc: 5426.40, percentSales: 0.13, qtySold: 570, percentQtySold: 0.15, avgPrice: 9.52 },
+            { item: "12 PCS PACKET MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 5199.44, itemDiscounts: 0.00, salesLessItemDisc: 5199.44, percentSales: 0.12, qtySold: 103, percentQtySold: 0.03, avgPrice: 50.48 },
+            { item: "BEEF BURGER COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 5583.17, itemDiscounts: -388.01, salesLessItemDisc: 5195.16, percentSales: 0.12, qtySold: 356, percentQtySold: 0.09, avgPrice: 14.59 },
+            { item: "KANZA", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 5352.44, itemDiscounts: -166.25, salesLessItemDisc: 5186.19, percentSales: 0.12, qtySold: 1629, percentQtySold: 0.42, avgPrice: 3.18 },
+            { item: "Super meal or Bogo", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 5141.40, itemDiscounts: -18.88, salesLessItemDisc: 5122.52, percentSales: 0.12, qtySold: 147, percentQtySold: 0.04, avgPrice: 34.85 },
+            { item: "Super meal sp Bogo", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 5057.10, itemDiscounts: -28.56, salesLessItemDisc: 5028.54, percentSales: 0.12, qtySold: 227, percentQtySold: 0.06, avgPrice: 22.15 },
+            { item: "SUPER CRUNCHY OR COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 5129.64, itemDiscounts: -228.00, salesLessItemDisc: 4901.64, percentSales: 0.11, qtySold: 347, percentQtySold: 0.09, avgPrice: 14.13 },
+            { item: "DYNAMITE Spicy SANDWICHES", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 4800.60, itemDiscounts: 0.00, salesLessItemDisc: 4800.60, percentSales: 0.11, qtySold: 630, percentQtySold: 0.16, avgPrice: 7.62 },
+            { item: "ECONMY MEAL-MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 4784.64, itemDiscounts: -5.30, salesLessItemDisc: 4779.34, percentSales: 0.11, qtySold: 36, percentQtySold: 0.01, avgPrice: 132.76 },
+            { item: "Volcano Combo Single", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 5079.76, itemDiscounts: -300.57, salesLessItemDisc: 4779.19, percentSales: 0.11, qtySold: 266, percentQtySold: 0.07, avgPrice: 17.97 },
+            { item: "20 PCS PACKET Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 4776.05, itemDiscounts: 0.00, salesLessItemDisc: 4776.05, percentSales: 0.11, qtySold: 59, percentQtySold: 0.02, avgPrice: 80.95 },
+            { item: "SUPER CRUNCHY SP COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 5107.70, itemDiscounts: -439.67, salesLessItemDisc: 4668.03, percentSales: 0.11, qtySold: 354, percentQtySold: 0.09, avgPrice: 13.19 },
+            { item: "TWIST BOX Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 4290.35, itemDiscounts: 0.00, salesLessItemDisc: 4290.35, percentSales: 0.10, qtySold: 265, percentQtySold: 0.07, avgPrice: 16.19 },
+            { item: "Mountain Dew S", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 4346.36, itemDiscounts: -131.91, salesLessItemDisc: 4214.45, percentSales: 0.10, qtySold: 1699, percentQtySold: 0.44, avgPrice: 2.48 },
+            { item: "CHICKEN DAY MIX Careem Offers", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 4133.85, itemDiscounts: -47.07, salesLessItemDisc: 4086.78, percentSales: 0.09, qtySold: 218, percentQtySold: 0.06, avgPrice: 18.75 },
+            { item: "TWIN SHAWARMA MEAL", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 3976.48, itemDiscounts: 0.00, salesLessItemDisc: 3976.48, percentSales: 0.09, qtySold: 232, percentQtySold: 0.06, avgPrice: 17.14 },
+            { item: "LITER MIRINDA", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 3946.04, itemDiscounts: 0.00, salesLessItemDisc: 3946.04, percentSales: 0.09, qtySold: 889, percentQtySold: 0.23, avgPrice: 4.44 },
+            { item: "LITER 7UP", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 3946.04, itemDiscounts: -1.43, salesLessItemDisc: 3944.61, percentSales: 0.09, qtySold: 913, percentQtySold: 0.24, avgPrice: 4.32 },
+            { item: "PKT STRIPS 20 Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 3885.52, itemDiscounts: 0.00, salesLessItemDisc: 3885.52, percentSales: 0.09, qtySold: 68, percentQtySold: 0.02, avgPrice: 57.14 },
+            { item: "16 PCS PACKET Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 3866.86, itemDiscounts: 0.00, salesLessItemDisc: 3866.86, percentSales: 0.09, qtySold: 58, percentQtySold: 0.01, avgPrice: 66.67 },
+            { item: "Ultimate M Careem Offers", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 3971.23, itemDiscounts: -367.32, salesLessItemDisc: 3603.91, percentSales: 0.08, qtySold: 142, percentQtySold: 0.04, avgPrice: 25.38 },
+            { item: "TWIST SP COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 3786.82, itemDiscounts: -204.74, salesLessItemDisc: 3582.08, percentSales: 0.08, qtySold: 278, percentQtySold: 0.07, avgPrice: 12.89 },
+            { item: "PKT STRIPS 20 Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 3542.68, itemDiscounts: 0.00, salesLessItemDisc: 3542.68, percentSales: 0.08, qtySold: 62, percentQtySold: 0.02, avgPrice: 57.14 },
+            { item: "12 PCS PACKET Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 3533.60, itemDiscounts: 0.00, salesLessItemDisc: 3533.60, percentSales: 0.08, qtySold: 70, percentQtySold: 0.02, avgPrice: 50.48 },
+            { item: "FAJITA COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 3866.34, itemDiscounts: -384.00, salesLessItemDisc: 3482.34, percentSales: 0.08, qtySold: 243, percentQtySold: 0.06, avgPrice: 14.33 },
+            { item: "NORMAL PCS", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 3384.36, itemDiscounts: 0.00, salesLessItemDisc: 3384.36, percentSales: 0.08, qtySold: 711, percentQtySold: 0.18, avgPrice: 4.76 },
+            { item: "TORNADO Origina SANDWI", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 3720.19, itemDiscounts: -367.11, salesLessItemDisc: 3353.08, percentSales: 0.08, qtySold: 353, percentQtySold: 0.09, avgPrice: 9.50 },
+            { item: "DEAL FOR ONE ( TWIST BOX ) SPIC", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 3351.33, itemDiscounts: 0.00, salesLessItemDisc: 3351.33, percentSales: 0.08, qtySold: 207, percentQtySold: 0.05, avgPrice: 16.19 },
+            { item: "SUPREM OR COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 3572.38, itemDiscounts: -223.43, salesLessItemDisc: 3348.95, percentSales: 0.08, qtySold: 238, percentQtySold: 0.06, avgPrice: 14.07 },
+            { item: "TWIST OR COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 3472.48, itemDiscounts: -176.35, salesLessItemDisc: 3296.13, percentSales: 0.08, qtySold: 248, percentQtySold: 0.06, avgPrice: 13.29 },
+            { item: "7UP S", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 3261.72, itemDiscounts: -86.52, salesLessItemDisc: 3175.20, percentSales: 0.07, qtySold: 1232, percentQtySold: 0.32, avgPrice: 2.58 },
+            { item: "ECONMY MEAL Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 2986.58, itemDiscounts: 0.00, salesLessItemDisc: 2986.58, percentSales: 0.07, qtySold: 23, percentQtySold: 0.01, avgPrice: 129.85 },
+            { item: "PKT STRIPS 20 MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 2971.28, itemDiscounts: 0.00, salesLessItemDisc: 2971.28, percentSales: 0.07, qtySold: 52, percentQtySold: 0.01, avgPrice: 57.14 },
+            { item: "MIRINDA S", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 2927.66, itemDiscounts: -68.10, salesLessItemDisc: 2859.56, percentSales: 0.07, qtySold: 1148, percentQtySold: 0.30, avgPrice: 2.49 },
+            { item: "TORNADO Spicy SANDWICHE", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 3122.87, itemDiscounts: -273.66, salesLessItemDisc: 2849.21, percentSales: 0.07, qtySold: 311, percentQtySold: 0.08, avgPrice: 9.16 },
+            { item: "16 PCS PACKET MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 2800.14, itemDiscounts: -20.00, salesLessItemDisc: 2780.14, percentSales: 0.06, qtySold: 42, percentQtySold: 0.01, avgPrice: 66.19 },
+            { item: "SUPREM SP COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 3060.00, itemDiscounts: -298.72, salesLessItemDisc: 2761.28, percentSales: 0.06, qtySold: 204, percentQtySold: 0.05, avgPrice: 13.54 },
+            { item: "CHICKEN BUEGER COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 2791.07, itemDiscounts: -83.10, salesLessItemDisc: 2707.97, percentSales: 0.06, qtySold: 187, percentQtySold: 0.05, avgPrice: 14.48 },
+            { item: "DYNAMITE Origina SANDW", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 3055.62, itemDiscounts: -433.51, salesLessItemDisc: 2622.11, percentSales: 0.06, qtySold: 287, percentQtySold: 0.07, avgPrice: 9.14 },
+            { item: "ECONMY MEAL Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 2529.44, itemDiscounts: 0.00, salesLessItemDisc: 2529.44, percentSales: 0.06, qtySold: 20, percentQtySold: 0.01, avgPrice: 126.47 },
+            { item: "FAJITA Spicy COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 2542.22, itemDiscounts: -204.67, salesLessItemDisc: 2337.55, percentSales: 0.05, qtySold: 167, percentQtySold: 0.04, avgPrice: 14.00 },
+            { item: "Spicy Fries", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 2489.00, itemDiscounts: -160.89, salesLessItemDisc: 2328.11, percentSales: 0.05, qtySold: 2620, percentQtySold: 0.68, avgPrice: 0.89 },
+            { item: "SUPER CRUNCHY SP SANDWI", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 2352.52, itemDiscounts: -95.99, salesLessItemDisc: 2256.53, percentSales: 0.05, qtySold: 319, percentQtySold: 0.08, avgPrice: 7.07 },
+            { item: "SUPER CRUNCHY OR SANDWIC", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 2365.81, itemDiscounts: -119.11, salesLessItemDisc: 2246.70, percentSales: 0.05, qtySold: 301, percentQtySold: 0.08, avgPrice: 7.46 },
+            { item: "DEAL FOR ONE ( TWIST BOX ) Orig", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 2153.27, itemDiscounts: 0.00, salesLessItemDisc: 2153.27, percentSales: 0.05, qtySold: 133, percentQtySold: 0.03, avgPrice: 16.19 },
+            { item: "QUICK SPICY", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 2142.00, itemDiscounts: 0.00, salesLessItemDisc: 2142.00, percentSales: 0.05, qtySold: 225, percentQtySold: 0.06, avgPrice: 9.52 },
+            { item: "SUPREME Origina SANDWIC", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 2192.35, itemDiscounts: -147.55, salesLessItemDisc: 2044.80, percentSales: 0.05, qtySold: 259, percentQtySold: 0.07, avgPrice: 7.89 },
+            { item: "Original 4 pcs chicken meal @ 8", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 2039.66, itemDiscounts: 0.00, salesLessItemDisc: 2039.66, percentSales: 0.05, qtySold: 238, percentQtySold: 0.06, avgPrice: 8.57 },
+            { item: "SHAWARMA Origina SANDWIC", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 2153.02, itemDiscounts: -141.38, salesLessItemDisc: 2011.64, percentSales: 0.05, qtySold: 301, percentQtySold: 0.08, avgPrice: 6.68 },
+            { item: "Upsize Large Fries And Large Pep", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 2018.24, itemDiscounts: -180.40, salesLessItemDisc: 1837.84, percentSales: 0.04, qtySold: 424, percentQtySold: 0.11, avgPrice: 4.33 },
+            { item: "16 PCS PACKET Original", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 1733.42, itemDiscounts: 0.00, salesLessItemDisc: 1733.42, percentSales: 0.04, qtySold: 26, percentQtySold: 0.01, avgPrice: 66.67 },
+            { item: "MAX SINGLE SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 1704.08, itemDiscounts: 0.00, salesLessItemDisc: 1704.08, percentSales: 0.04, qtySold: 179, percentQtySold: 0.05, avgPrice: 9.52 },
+            { item: "SHAWARMA Spicy SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 1782.51, itemDiscounts: -99.60, salesLessItemDisc: 1682.91, percentSales: 0.04, qtySold: 253, percentQtySold: 0.07, avgPrice: 6.65 },
+            { item: "STRIPS FAMILY - MIX", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 1655.28, itemDiscounts: 0.00, salesLessItemDisc: 1655.28, percentSales: 0.04, qtySold: 22, percentQtySold: 0.01, avgPrice: 75.24 },
+            { item: "LARGE PEPSI", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 1410.37, itemDiscounts: 0.00, salesLessItemDisc: 1410.37, percentSales: 0.03, qtySold: 247, percentQtySold: 0.06, avgPrice: 5.71 },
+            { item: "MAXI CHICKEN SINGLE COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 1314.68, itemDiscounts: 0.00, salesLessItemDisc: 1314.68, percentSales: 0.03, qtySold: 92, percentQtySold: 0.02, avgPrice: 14.29 },
+            { item: "DYNAMITE Spicy SANDWIC", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 1257.30, itemDiscounts: 0.00, salesLessItemDisc: 1257.30, percentSales: 0.03, qtySold: 165, percentQtySold: 0.04, avgPrice: 7.62 },
+            { item: "MAXI CHICKEN DOUBLE COMB", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 1335.27, itemDiscounts: -85.41, salesLessItemDisc: 1249.86, percentSales: 0.03, qtySold: 62, percentQtySold: 0.02, avgPrice: 20.16 },
+            { item: "BUFFALO MEAL", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 1243.23, itemDiscounts: 0.00, salesLessItemDisc: 1243.23, percentSales: 0.03, qtySold: 87, percentQtySold: 0.02, avgPrice: 14.29 },
+            { item: "Go Large", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 1234.44, itemDiscounts: 0.00, salesLessItemDisc: 1234.44, percentSales: 0.03, qtySold: 324, percentQtySold: 0.08, avgPrice: 3.81 },
+            { item: "Crispy Snack Original Me", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 1354.66, itemDiscounts: -141.12, salesLessItemDisc: 1213.54, percentSales: 0.03, qtySold: 82, percentQtySold: 0.02, avgPrice: 14.80 },
+            { item: "DYNAMITE SPY COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 1213.24, itemDiscounts: 0.00, salesLessItemDisc: 1213.24, percentSales: 0.03, qtySold: 98, percentQtySold: 0.03, avgPrice: 12.38 },
+            { item: "SUPREME Spicy SANDWICH", familyGroup: "Sandwich", majorGroup: "Food", grossSales: 1267.24, itemDiscounts: -65.48, salesLessItemDisc: 1201.76, percentSales: 0.03, qtySold: 166, percentQtySold: 0.04, avgPrice: 7.24 },
+            { item: "Extra Chesses", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 1222.65, itemDiscounts: -118.83, salesLessItemDisc: 1103.82, percentSales: 0.03, qtySold: 706, percentQtySold: 0.18, avgPrice: 1.56 },
+            { item: "6 PCS NUGGETS", familyGroup: "Side Order", majorGroup: "Food", grossSales: 960.12, itemDiscounts: 0.00, salesLessItemDisc: 960.12, percentSales: 0.02, qtySold: 126, percentQtySold: 0.03, avgPrice: 7.62 },
+            { item: "KIDS MEAL NUGGETS", familyGroup: "KIDS MEAL", majorGroup: "Food", grossSales: 928.85, itemDiscounts: 0.00, salesLessItemDisc: 928.85, percentSales: 0.02, qtySold: 65, percentQtySold: 0.02, avgPrice: 14.29 },
+            { item: "SMALL JUICE", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 940.94, itemDiscounts: -38.40, salesLessItemDisc: 902.54, percentSales: 0.02, qtySold: 329, percentQtySold: 0.08, avgPrice: 2.74 },
+            { item: "UP CHARAGE", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 880.88, itemDiscounts: 0.00, salesLessItemDisc: 880.88, percentSales: 0.02, qtySold: 308, percentQtySold: 0.08, avgPrice: 2.86 },
+            { item: "DIET PEPSI S", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 822.70, itemDiscounts: 0.00, salesLessItemDisc: 822.70, percentSales: 0.02, qtySold: 433, percentQtySold: 0.11, avgPrice: 1.90 },
+            { item: "Cheese", familyGroup: "Side Order", majorGroup: "Food", grossSales: 807.50, itemDiscounts: -1.56, salesLessItemDisc: 805.94, percentSales: 0.02, qtySold: 850, percentQtySold: 0.22, avgPrice: 0.95 },
+            { item: "GO KANZA .", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 738.15, itemDiscounts: 0.00, salesLessItemDisc: 738.15, percentSales: 0.02, qtySold: 1276, percentQtySold: 0.33, avgPrice: 0.58 },
+            { item: "CRISPY SMALL Spicy", familyGroup: "Side Order", majorGroup: "Food", grossSales: 680.34, itemDiscounts: 0.00, salesLessItemDisc: 680.34, percentSales: 0.02, qtySold: 102, percentQtySold: 0.03, avgPrice: 6.67 },
+            { item: "SMALL POP CORN", familyGroup: "Side Order", majorGroup: "Food", grossSales: 563.88, itemDiscounts: 0.00, salesLessItemDisc: 563.88, percentSales: 0.01, qtySold: 74, percentQtySold: 0.02, avgPrice: 7.62 },
+            { item: "DYNAMITE OR COMBO", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 544.72, itemDiscounts: 0.00, salesLessItemDisc: 544.72, percentSales: 0.01, qtySold: 44, percentQtySold: 0.01, avgPrice: 12.38 },
+            { item: "QUICK NORMAL", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 456.96, itemDiscounts: 0.00, salesLessItemDisc: 456.96, percentSales: 0.01, qtySold: 48, percentQtySold: 0.01, avgPrice: 9.52 },
+            { item: "Golden 4 meal Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 418.88, itemDiscounts: 0.00, salesLessItemDisc: 418.88, percentSales: 0.01, qtySold: 44, percentQtySold: 0.01, avgPrice: 9.52 },
+            { item: "CRISPY SMALL Original", familyGroup: "Side Order", majorGroup: "Food", grossSales: 401.15, itemDiscounts: 0.00, salesLessItemDisc: 401.15, percentSales: 0.01, qtySold: 60, percentQtySold: 0.02, avgPrice: 6.69 },
+            { item: "KIDS MEAL POP CORN", familyGroup: "KIDS MEAL", majorGroup: "Food", grossSales: 400.12, itemDiscounts: 0.00, salesLessItemDisc: 400.12, percentSales: 0.01, qtySold: 28, percentQtySold: 0.01, avgPrice: 14.29 },
+            { item: "UP CHARAGE", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 328.90, itemDiscounts: 0.00, salesLessItemDisc: 328.90, percentSales: 0.01, qtySold: 115, percentQtySold: 0.03, avgPrice: 2.86 },
+            { item: "Golden 4 meal Normal", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 304.64, itemDiscounts: 0.00, salesLessItemDisc: 304.64, percentSales: 0.01, qtySold: 32, percentQtySold: 0.01, avgPrice: 9.52 },
+            { item: "JUCE LAKNOR LARGE", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 274.24, itemDiscounts: 0.00, salesLessItemDisc: 274.24, percentSales: 0.01, qtySold: 32, percentQtySold: 0.01, avgPrice: 8.57 },
+            { item: "DELIVERY CHARGES 3", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 274.56, itemDiscounts: -1.74, salesLessItemDisc: 272.82, percentSales: 0.01, qtySold: 96, percentQtySold: 0.02, avgPrice: 2.84 },
+            { item: "MAXI CHICKEN SINGLE COMB", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 228.64, itemDiscounts: 0.00, salesLessItemDisc: 228.64, percentSales: 0.01, qtySold: 16, percentQtySold: 0.00, avgPrice: 14.29 },
+            { item: "GO Family KANZA", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 214.50, itemDiscounts: 0.00, salesLessItemDisc: 214.50, percentSales: 0.00, qtySold: 75, percentQtySold: 0.02, avgPrice: 2.86 },
+            { item: "KIDS MEAL CRISPY", familyGroup: "KIDS MEAL", majorGroup: "Food", grossSales: 185.77, itemDiscounts: 0.00, salesLessItemDisc: 185.77, percentSales: 0.00, qtySold: 13, percentQtySold: 0.00, avgPrice: 14.29 },
+            { item: "LARGE DEW", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 137.04, itemDiscounts: 0.00, salesLessItemDisc: 137.04, percentSales: 0.00, qtySold: 24, percentQtySold: 0.01, avgPrice: 5.71 },
+            { item: "LITER PEPSI Combo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 112.38, itemDiscounts: 0.00, salesLessItemDisc: 112.38, percentSales: 0.00, qtySold: 3232, percentQtySold: 0.83, avgPrice: 0.03 },
+            { item: "LARGE MIRINDA", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 85.65, itemDiscounts: 0.00, salesLessItemDisc: 85.65, percentSales: 0.00, qtySold: 15, percentQtySold: 0.00, avgPrice: 5.71 },
+            { item: "Offersn Mix meal @ 9 AED", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 51.42, itemDiscounts: 0.00, salesLessItemDisc: 51.42, percentSales: 0.00, qtySold: 6, percentQtySold: 0.00, avgPrice: 8.57 },
+            { item: "LARGE 7 UP", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 51.39, itemDiscounts: 0.00, salesLessItemDisc: 51.39, percentSales: 0.00, qtySold: 9, percentQtySold: 0.00, avgPrice: 5.71 },
+            { item: "PEPSI M", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 38.08, itemDiscounts: 0.00, salesLessItemDisc: 38.08, percentSales: 0.00, qtySold: 8, percentQtySold: 0.00, avgPrice: 4.76 },
+            { item: "DIET PEPSI COMBO", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 28.57, itemDiscounts: 0.00, salesLessItemDisc: 28.57, percentSales: 0.00, qtySold: 2126, percentQtySold: 0.55, avgPrice: 0.01 },
+            { item: "Mountain Dew COMBO", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 28.57, itemDiscounts: 0.00, salesLessItemDisc: 28.57, percentSales: 0.00, qtySold: 2470, percentQtySold: 0.64, avgPrice: 0.01 },
+            { item: "Offers Spicy meal @ 9 AED", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 25.71, itemDiscounts: 0.00, salesLessItemDisc: 25.71, percentSales: 0.00, qtySold: 3, percentQtySold: 0.00, avgPrice: 8.57 },
+            { item: "DIET PEPSI M", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 23.80, itemDiscounts: 0.00, salesLessItemDisc: 23.80, percentSales: 0.00, qtySold: 5, percentQtySold: 0.00, avgPrice: 4.76 },
+            { item: "Golden 4 meal mix", familyGroup: "Combo Meal Mix", majorGroup: "Food", grossSales: 19.04, itemDiscounts: 0.00, salesLessItemDisc: 19.04, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 9.52 },
+            { item: "LARGE POP CORN", familyGroup: "Side Order", majorGroup: "Food", grossSales: 9.52, itemDiscounts: 0.00, salesLessItemDisc: 9.52, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 9.52 },
+            { item: "Mountain Dew M", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 9.52, itemDiscounts: 0.00, salesLessItemDisc: 9.52, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 4.76 },
+            { item: "4 pcs chicken Spicy meal @ 9 AE", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 8.57, itemDiscounts: 0.00, salesLessItemDisc: 8.57, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 8.57 },
+            { item: "7UP M", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 4.76, itemDiscounts: 0.00, salesLessItemDisc: 4.76, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 4.76 },
+            { item: "MIRINDA M", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 4.76, itemDiscounts: 0.00, salesLessItemDisc: 4.76, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 4.76 },
+            { item: "GO JUICE", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 2.86, itemDiscounts: 0.00, salesLessItemDisc: 2.86, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 2.86 },
+            { item: "Shani Can", familyGroup: "Soft Drinks", majorGroup: "Beverage", grossSales: 2.86, itemDiscounts: 0.00, salesLessItemDisc: 2.86, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 2.86 },
+            { item: "GO Shani", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 2.85, itemDiscounts: 0.00, salesLessItemDisc: 2.85, percentSales: 0.00, qtySold: 3, percentQtySold: 0.00, avgPrice: 0.95 },
+            { item: "Extra BBQ", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.95, itemDiscounts: 0.00, salesLessItemDisc: 0.95, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.95 },
+            { item: "Not Spicy Fries", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2243, percentQtySold: 0.58, avgPrice: 0.00 },
+            { item: "10 STRIPS OR 10 STRIPS S", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 9, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "10 STRIPS OR 10 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 40, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "12 SPICY 8 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 66, percentQtySold: 0.02, avgPrice: 0.00 },
+            { item: "16 SPICY 4 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 56, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "1 CH OR 7 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 222, percentQtySold: 0.06, avgPrice: 0.00 },
+            { item: "1STRIPS OR 7 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 3, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "2 CH OR 6 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 130, percentQtySold: 0.03, avgPrice: 0.00 },
+            { item: "2LITER 7UP Combo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 44, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "2LITER MIRINDA Combo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 28, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "2LITER PEPSI Combo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 111, percentQtySold: 0.03, avgPrice: 0.00 },
+            { item: "2 STRIPS OR 6 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 10, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "3 CH OR 5 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 112, percentQtySold: 0.03, avgPrice: 0.00 },
+            { item: "3 STRIPS OR 17 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 3, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "3 STRIPS OR 17 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "3 STRIPS OR 5 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 5, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "4 CH OR 4 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2671, percentQtySold: 0.69, avgPrice: 0.00 },
+            { item: "4 ORGINAL 12 SPICY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 26, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "4 SPICY 12 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 22, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "4 SPICY 16 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 28, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "4 SPICY 8 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 536, percentQtySold: 0.14, avgPrice: 0.00 },
+            { item: "4 STRIPS OR 16 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "4 STRIPS OR 4 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 269, percentQtySold: 0.07, avgPrice: 0.00 },
+            { item: "5 CH OR 3 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 160, percentQtySold: 0.04, avgPrice: 0.00 },
+            { item: "5 STRIPS OR 15 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 4, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "5 STRIPS OR 15 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 10, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "5 STRIPS OR 3 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "6 CH OR 2 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 152, percentQtySold: 0.04, avgPrice: 0.00 },
+            { item: "6 STRIPS OR 14 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "6 STRIPS OR 14 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "6 STRIPS OR 2 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "7 CH OR 1 CH SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 120, percentQtySold: 0.03, avgPrice: 0.00 },
+            { item: "7 STRIPS OR 13 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "7 STRIPS OR 1 STRIPS SP", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 6, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "7 UP COMBO", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1888, percentQtySold: 0.49, avgPrice: 0.00 },
+            { item: "8 SPICY 12 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 94, percentQtySold: 0.02, avgPrice: 0.00 },
+            { item: "8 SPICY 4 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 748, percentQtySold: 0.19, avgPrice: 0.00 },
+            { item: "8 SPICY 8 ORGINAL", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 94, percentQtySold: 0.02, avgPrice: 0.00 },
+            { item: "9 STRIPS OR 11 STRIPS SPY", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "CUT", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 109, percentQtySold: 0.03, avgPrice: 0.00 },
+            { item: "DELIVERY CHARGES 7", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 65, percentQtySold: 0.02, avgPrice: 0.00 },
+            { item: "DELIVERY CHARGES 9", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 128, percentQtySold: 0.03, avgPrice: 0.00 },
+            { item: "Extra Greenpaper", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Extra Icebearge", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 33, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "Extra Jalapino", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Extra Mayo", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 184, percentQtySold: 0.05, avgPrice: 0.00 },
+            { item: "Extra Onion", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 9, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Extra Pickles", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 6, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Extra Pickles", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 9, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Extra Sauce", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 261, percentQtySold: 0.07, avgPrice: 0.00 },
+            { item: "Extra Terky", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 17, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Extra Tomato", familyGroup: "Combo Meal Modifers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 23, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "GO WATER.", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 3, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "GO WATER.", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 854, percentQtySold: 0.22, avgPrice: 0.00 },
+            { item: "LITER 7UP Combo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1046, percentQtySold: 0.27, avgPrice: 0.00 },
+            { item: "LITER MIRINDA Combo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 577, percentQtySold: 0.15, avgPrice: 0.00 },
+            { item: "MIRANDA COMBO", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1856, percentQtySold: 0.48, avgPrice: 0.00 },
+            { item: "NO BREAST", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1462, percentQtySold: 0.38, avgPrice: 0.00 },
+            { item: "NO ICE", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1108, percentQtySold: 0.29, avgPrice: 0.00 },
+            { item: "NO LEG", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 743, percentQtySold: 0.19, avgPrice: 0.00 },
+            { item: "NO THIGH", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 673, percentQtySold: 0.17, avgPrice: 0.00 },
+            { item: "NO WING", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 837, percentQtySold: 0.22, avgPrice: 0.00 },
+            { item: "PEPSI COMBO", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 15690, percentQtySold: 4.05, avgPrice: 0.00 },
+            { item: "Plane", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 12, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "QUICK NORMAL Employees", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 2278, percentQtySold: 0.59, avgPrice: 0.00 },
+            { item: "QUICK NORMAL Maintenanc", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 5, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "QUICK NORMAL Maintenance", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 25, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "QUICK Spicy Employees", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1828, percentQtySold: 0.47, avgPrice: 0.00 },
+            { item: "QUICK Spicy Maintenanc", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "QUICK Spicy Maintenance", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 40, percentQtySold: 0.01, avgPrice: 0.00 },
+            { item: "Ramadan individual Spicy", familyGroup: "Combo Meal Spicy", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 0, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "RICE MEAL Original employees", familyGroup: "SNACK MEAL", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 195, percentQtySold: 0.05, avgPrice: 0.00 },
+            { item: "Smiles Offers", familyGroup: "Combo Meal Original", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 0, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "TWIST SP COMBO employees", familyGroup: "Combo Sandwich", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 588, percentQtySold: 0.15, avgPrice: 0.00 },
+            { item: "Without BBQ", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 4, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Without Chesses", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 188, percentQtySold: 0.05, avgPrice: 0.00 },
+            { item: "Without Greenpaper", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 16, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Without Icebearge", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 726, percentQtySold: 0.19, avgPrice: 0.00 },
+            { item: "Without Jalapino", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 3, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Without Mayo", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 162, percentQtySold: 0.04, avgPrice: 0.00 },
+            { item: "Without Onion", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 153, percentQtySold: 0.04, avgPrice: 0.00 },
+            { item: "Without Pickles", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 190, percentQtySold: 0.05, avgPrice: 0.00 },
+            { item: "Without Sause", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 75, percentQtySold: 0.02, avgPrice: 0.00 },
+            { item: "Without Terky", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 8, percentQtySold: 0.00, avgPrice: 0.00 },
+            { item: "Without Tomato", familyGroup: "Food Modifiers", majorGroup: "Food", grossSales: 0.00, itemDiscounts: 0.00, salesLessItemDisc: 0.00, percentSales: 0.00, qtySold: 1411, percentQtySold: 0.36, avgPrice: 0.00 }
+        ];
+
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const familyFilter = document.getElementById('familyFilter');
+        const majorFilter = document.getElementById('majorFilter');
+        const sortBy = document.getElementById('sortBy');
+        const salesTableBody = document.getElementById('salesTableBody');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable();
+            updateCharts();
+        });
+
+        // Render table
+        function renderTable(data = salesData) {
+            if (data.length === 0) {
+                salesTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No data found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            salesTableBody.innerHTML = data.map(item => `
+                <tr>
+                    <td>${item.item}</td>
+                    <td>${item.familyGroup}</td>
+                    <td>${item.majorGroup}</td>
+                    <td>AED ${item.grossSales.toFixed(2)}</td>
+                    <td>AED ${item.itemDiscounts.toFixed(2)}</td>
+                    <td>AED ${item.salesLessItemDisc.toFixed(2)}</td>
+                    <td>${item.percentSales.toFixed(2)}%</td>
+                    <td>${item.qtySold.toLocaleString()}</td>
+                    <td>${item.percentQtySold.toFixed(2)}%</td>
+                    <td>AED ${item.avgPrice.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Search functionality
+        searchInput.addEventListener('input', filterData);
+        familyFilter.addEventListener('change', filterData);
+        majorFilter.addEventListener('change', filterData);
+        sortBy.addEventListener('change', filterData);
+
+        function filterData() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const familyValue = familyFilter.value;
+            const majorValue = majorFilter.value;
+            const sortValue = sortBy.value;
+
+            let filteredData = salesData.filter(item => {
+                const matchesSearch = item.item.toLowerCase().includes(searchTerm) ||
+                                    item.familyGroup.toLowerCase().includes(searchTerm);
+                const matchesFamily = !familyValue || item.familyGroup === familyValue;
+                const matchesMajor = !majorValue || item.majorGroup === majorValue;
+                
+                return matchesSearch && matchesFamily && matchesMajor;
+            });
+
+            // Sort data
+            filteredData.sort((a, b) => {
+                switch(sortValue) {
+                    case 'grossSales':
+                        return b.grossSales - a.grossSales;
+                    case 'salesLessDisc':
+                        return b.salesLessItemDisc - a.salesLessItemDisc;
+                    case 'qtySold':
+                        return b.qtySold - a.qtySold;
+                    case 'avgPrice':
+                        return b.avgPrice - a.avgPrice;
+                    case 'percentSales':
+                        return b.percentSales - a.percentSales;
+                    default:
+                        return 0;
+                }
+            });
+
+            renderTable(filteredData);
+        }
+
+        // Update charts
+        function updateCharts() {
+            // Sales by Family Group
+            updateSalesByFamilyChart();
+            
+            // Top Products
+            updateTopProductsChart();
+            
+            // Sales by Major Group
+            updateSalesByMajorChart();
+            
+            // Discount Impact
+            updateDiscountImpactChart();
+        }
+
+        // Sales by Family Group Chart
+        function updateSalesByFamilyChart() {
+            const ctx = document.getElementById('salesByFamilyChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.salesByFamilyChart) {
+                window.salesByFamilyChart.destroy();
+            }
+            
+            // Group sales by family group
+            const familySales = {};
+            salesData.forEach(item => {
+                if (item.familyGroup && item.salesLessItemDisc > 0) {
+                    familySales[item.familyGroup] = (familySales[item.familyGroup] || 0) + item.salesLessItemDisc;
+                }
+            });
+            
+            // Sort by value
+            const sortedFamilies = Object.entries(familySales)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8); // Top 8
+            
+            window.salesByFamilyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedFamilies.map(f => f[0]),
+                    datasets: [{
+                        label: 'Net Sales (AED)',
+                        data: sortedFamilies.map(f => f[1]),
+                        backgroundColor: '#e53935'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Sales by Family Group',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'AED ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Top Products Chart
+        function updateTopProductsChart() {
+            const ctx = document.getElementById('topProductsChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.topProductsChart) {
+                window.topProductsChart.destroy();
+            }
+            
+            // Get top 10 products by net sales
+            const topProducts = [...salesData]
+                .filter(item => item.salesLessItemDisc > 0)
+                .sort((a, b) => b.salesLessItemDisc - a.salesLessItemDisc)
+                .slice(0, 10);
+            
+            window.topProductsChart = new Chart(ctx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: topProducts.map(p => p.item),
+                    datasets: [{
+                        label: 'Net Sales (AED)',
+                        data: topProducts.map(p => p.salesLessItemDisc),
+                        backgroundColor: '#fb8c00'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top 10 Products by Net Sales',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'AED ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Sales by Major Group Chart
+        function updateSalesByMajorChart() {
+            const ctx = document.getElementById('salesByMajorChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.salesByMajorChart) {
+                window.salesByMajorChart.destroy();
+            }
+            
+            // Group sales by major group
+            const majorSales = {};
+            salesData.forEach(item => {
+                if (item.majorGroup && item.salesLessItemDisc > 0) {
+                    majorSales[item.majorGroup] = (majorSales[item.majorGroup] || 0) + item.salesLessItemDisc;
+                }
+            });
+            
+            window.salesByMajorChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(majorSales),
+                    datasets: [{
+                        data: Object.values(majorSales),
+                        backgroundColor: [
+                            '#43a047',
+                            '#1e88e5'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Sales by Major Group',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Discount Impact Chart
+        function updateDiscountImpactChart() {
+            const ctx = document.getElementById('discountImpactChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.discountImpactChart) {
+                window.discountImpactChart.destroy();
+            }
+            
+            // Get items with highest discounts
+            const discountItems = [...salesData]
+                .filter(item => item.itemDiscounts < 0)
+                .sort((a, b) => a.itemDiscounts - b.itemDiscounts)
+                .slice(0, 10);
+            
+            window.discountImpactChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: discountItems.map(item => item.item),
+                    datasets: [
+                        {
+                            label: 'Gross Sales',
+                            data: discountItems.map(item => item.grossSales),
+                            backgroundColor: '#1e88e5'
+                        },
+                        {
+                            label: 'Discounts',
+                            data: discountItems.map(item => Math.abs(item.itemDiscounts)),
+                            backgroundColor: '#e53935'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Top 10 Items by Discount Amount',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'AED ' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            stacked: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Switch tabs
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Update charts when switching to analysis tab
+            if (tabId === 'analysis') {
+                updateCharts();
+            }
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            let csv = 'Item,Family Group,Major Group,Gross Sales,Item Discounts,Sales Less Item Disc,% Sales,Qty Sold,% Qty Sold,Average Price\n';
+            
+            salesData.forEach(item => {
+                csv += `${item.item},${item.familyGroup},${item.majorGroup},${item.grossSales},${item.itemDiscounts},${item.salesLessItemDisc},${item.percentSales}%,${item.qtySold},${item.percentQtySold}%,${item.avgPrice}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `crispy_chicken_sales_august_2025.csv`;
+            link.click();
+            
+            showNotification('CSV file exported successfully!', 'success');
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(20);
+            doc.text('Crispy Chicken - Sales Mix Items Summary', 105, 20, { align: 'center' });
+            
+            // Add date
+            doc.setFontSize(12);
+            doc.text('Business Dates: 8/1/2025 - 8/31/2025', 20, 35);
+            doc.text('Locations: All', 20, 45);
+            doc.text('Revenue Centers: All', 20, 55);
+            
+            // Add summary
+            const totalGross = salesData.reduce((sum, item) => sum + item.grossSales, 0);
+            const totalDiscounts = salesData.reduce((sum, item) => sum + item.itemDiscounts, 0);
+            const totalNet = salesData.reduce((sum, item) => sum + item.salesLessItemDisc, 0);
+            const totalQty = salesData.reduce((sum, item) => sum + item.qtySold, 0);
+            
+            doc.text(`Total Gross Sales: AED ${totalGross.toFixed(2)}`, 20, 70);
+            doc.text(`Total Discounts: AED ${totalDiscounts.toFixed(2)}`, 20, 80);
+            doc.text(`Total Net Sales: AED ${totalNet.toFixed(2)}`, 20, 90);
+            doc.text(`Total Quantity Sold: ${totalQty.toLocaleString()}`, 20, 100);
+            
+            // Add table header
+            doc.setFontSize(10);
+            doc.text('Item', 20, 120);
+            doc.text('Family Group', 60, 120);
+            doc.text('Net Sales', 110, 120);
+            doc.text('Qty Sold', 150, 120);
+            doc.text('Avg Price', 180, 120);
+            
+            // Add table rows (top 20 items)
+            let y = 130;
+            const topItems = [...salesData]
+                .sort((a, b) => b.salesLessItemDisc - a.salesLessItemDisc)
+                .slice(0, 20);
+            
+            topItems.forEach(item => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(item.item.substring(0, 25), 20, y);
+                doc.text(item.familyGroup.substring(0, 15), 60, y);
+                doc.text(`AED ${item.salesLessItemDisc.toFixed(2)}`, 110, y);
+                doc.text(item.qtySold.toString(), 150, y);
+                doc.text(`AED ${item.avgPrice.toFixed(2)}`, 180, y);
+                y += 10;
+            });
+            
+            doc.save(`crispy_chicken_sales_august_2025.pdf`);
+            
+            showNotification('PDF file exported successfully!', 'success');
+        }
+
+        // Generate Summary Report
+        function generateSummaryReport() {
+            const totalGross = salesData.reduce((sum, item) => sum + item.grossSales, 0);
+            const totalDiscounts = salesData.reduce((sum, item) => sum + item.itemDiscounts, 0);
+            const totalNet = salesData.reduce((sum, item) => sum + item.salesLessItemDisc, 0);
+            const totalQty = salesData.reduce((sum, item) => sum + item.qtySold, 0);
+            const avgPrice = totalNet / totalQty;
+            
+            // Top products by sales
+            const topProducts = [...salesData]
+                .sort((a, b) => b.salesLessItemDisc - a.salesLessItemDisc)
+                .slice(0, 5);
+            
+            // Top products by quantity
+            const topQtyProducts = [...salesData]
+                .sort((a, b) => b.qtySold - a.qtySold)
+                .slice(0, 5);
+            
+            // Family group breakdown
+            const familyBreakdown = {};
+            salesData.forEach(item => {
+                familyBreakdown[item.familyGroup] = (familyBreakdown[item.familyGroup] || 0) + item.salesLessItemDisc;
+            });
+            
+            const report = `
+CRISPY CHICKEN - SALES MIX ITEMS SUMMARY REPORT
+===================================================
+
+PERIOD: August 1-31, 2025
+LOCATIONS: All
+REVENUE CENTERS: All
+
+EXECUTIVE SUMMARY:
+----------------
+Total Gross Sales: AED ${totalGross.toFixed(2)}
+Total Discounts: AED ${totalDiscounts.toFixed(2)}
+Total Net Sales: AED ${totalNet.toFixed(2)}
+Total Quantity Sold: ${totalQty.toLocaleString()}
+Average Price per Unit: AED ${avgPrice.toFixed(2)}
+
+TOP 5 PRODUCTS BY NET SALES:
+-----------------------------
+${topProducts.map((item, index) => 
+    `${index + 1}. ${item.item}: AED ${item.salesLessItemDisc.toFixed(2)} (${item.percentSales.toFixed(2)}%)`
+).join('\n')}
+
+TOP 5 PRODUCTS BY QUANTITY SOLD:
+--------------------------------
+${topQtyProducts.map((item, index) => 
+    `${index + 1}. ${item.item}: ${item.qtySold.toLocaleString()} units (${item.percentQtySold.toFixed(2)}%)`
+).join('\n')}
+
+SALES BY FAMILY GROUP:
+----------------------
+${Object.entries(familyBreakdown)
+    .sort((a, b) => b[1] - a[1])
+    .map(([group, amount]) => 
+        `${group}: AED ${amount.toFixed(2)} (${((amount / totalNet) * 100).toFixed(2)}%)`
+    ).join('\n')}
+
+KEY INSIGHTS:
+------------
+1. The highest selling product is Daily Spicy Meal, generating AED 673,960.98 (15.63% of total sales)
+2. Combo Meal Spicy is the highest selling family group
+3. Food items represent the majority of sales compared to beverages
+4. The average discount rate is ${((Math.abs(totalDiscounts) / totalGross) * 100).toFixed(2)}%
+5. The most popular items by quantity are side orders and modifiers
+
+This report was automatically generated on ${new Date().toLocaleDateString()}
+            `;
+            
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `crispy_chicken_summary_report_august_2025.txt`;
+            link.click();
+            
+            showNotification('Summary report generated successfully!', 'success');
+        }
+
+        // Generate Inventory Report
+        function generateInventoryReport() {
+            // Group by family group for inventory analysis
+            const inventoryData = {};
+            
+            salesData.forEach(item => {
+                if (!inventoryData[item.familyGroup]) {
+                    inventoryData[item.familyGroup] = {
+                        totalQty: 0,
+                        totalSales: 0,
+                        items: []
+                    };
+                }
+                
+                inventoryData[item.familyGroup].totalQty += item.qtySold;
+                inventoryData[item.familyGroup].totalSales += item.salesLessItemDisc;
+                inventoryData[item.familyGroup].items.push(item);
+            });
+            
+            // Sort by quantity
+            const sortedGroups = Object.entries(inventoryData)
+                .sort((a, b) => b[1].totalQty - a[1].totalQty);
+            
+            let report = `
+CRISPY CHICKEN - INVENTORY ANALYSIS REPORT
+======================================
+
+PERIOD: August 1-31, 2025
+PURPOSE: Monthly inventory movement analysis
+
+INVENTORY SUMMARY BY FAMILY GROUP:
+-----------------------------------
+${sortedGroups.map(([group, data], index) => 
+    `${index + 1}. ${group}
+   - Total Quantity Sold: ${data.totalQty.toLocaleString()} units
+   - Total Revenue: AED ${data.totalSales.toFixed(2)}
+   - Average Price: AED ${(data.totalSales / data.totalQty).toFixed(2)}
+   - Top Item: ${data.items.sort((a, b) => b.qtySold - a.qtySold)[0].item}
+`).join('\n\n')}
+
+TOP 20 ITEMS BY QUANTITY SOLD:
+------------------------------
+${[...salesData]
+    .sort((a, b) => b.qtySold - a.qtySold)
+    .slice(0, 20)
+    .map((item, index) => 
+        `${index + 1}. ${item.item}: ${item.qtySold.toLocaleString()} units (AED ${item.salesLessItemDisc.toFixed(2)})`
+    ).join('\n')}
+
+LOW MOVEMENT ITEMS (Less than 50 units sold):
+----------------------------------------------
+${salesData
+    .filter(item => item.qtySold < 50 && item.qtySold > 0)
+    .sort((a, b) => a.qtySold - b.qtySold)
+    .map((item, index) => 
+        `${index + 1}. ${item.item}: ${item.qtySold} units`
+    ).join('\n')}
+
+RECOMMENDATIONS:
+--------------
+1. Focus on high-performing items like Daily Spicy Meal and DAILY OFFER Spicy Meal
+2. Consider promoting items with low movement or bundling them with popular items
+3. Monitor inventory levels for side orders and modifiers which have high volume
+4. Review pricing strategy for items with low quantity but high value
+
+This report was automatically generated on ${new Date().toLocaleDateString()}
+            `;
+            
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `crispy_chicken_inventory_report_august_2025.txt`;
+            link.click();
+            
+            showNotification('Inventory report generated successfully!', 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            
+            if (type === 'error') {
+                notification.style.background = 'var(--danger)';
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
